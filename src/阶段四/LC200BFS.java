@@ -50,10 +50,6 @@ public class LC200BFS {
 
     // 基础广度优先搜素类型
     public static int numIslands(char[][] grid) {
-        // 防御判空，防止grid为空、grid[0]越界
-        if (grid == null || grid.length == 0) {
-            return 0;
-        }
         // m：行数，n：列数
         int m = grid.length;
         int n = grid[0].length;
