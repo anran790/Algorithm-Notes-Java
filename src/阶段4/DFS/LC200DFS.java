@@ -1,4 +1,4 @@
-package 阶段四.DFS;
+package 阶段4.DFS;
 
 /**
  * 200. 岛屿数量
