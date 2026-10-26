@@ -1,4 +1,4 @@
-package 阶段四.BFS;
+package 阶段4.BFS;
 
 import java.util.LinkedList;
 import java.util.Queue;
