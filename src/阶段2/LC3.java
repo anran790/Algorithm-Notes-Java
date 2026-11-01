@@ -4,61 +4,49 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * LC3 无重复字符的最长子串
  *
- 代码
- 测试用例
- 测试用例
- 测试结果
- 3. 无重复字符的最长子串
- 已解答
- 中等
- 相关标签
- premium lock icon
- 相关企业
- 提示
- 给定一个字符串 s ，请你找出其中不含有重复字符的 最长 子串 的长度。
-
-
- 示例 1:
-
- 输入: s = "abcabcbb"
- 输出: 3
- 解释: 因为无重复字符的最长子串是 "abc"，所以其长度为 3。注意 "bca" 和 "cab" 也是正确答案。
- 示例 2:
-
- 输入: s = "bbbbb"
- 输出: 1
- 解释: 因为无重复字符的最长子串是 "b"，所以其长度为 1。
- 示例 3:
-
- 输入: s = "pwwkew"
- 输出: 3
- 解释: 因为无重复字符的最长子串是 "wke"，所以其长度为 3。
- 请注意，你的答案必须是 子串 的长度，"pwke" 是一个子序列，不是子串。
-
+ * 难度：中等    标签：滑动窗口（不定长，求最大）
+ *
+ * 题目：给定字符串 s，找出不含重复字符的最长「子串」的长度。
+ *       注意是子串（连续），不是子序列。
+ * 示例：s = "abcabcbb"  →  3（"abc"）
+ *       s = "pwwkew"    →  3（"wke"）
+ *
+ * 思路：维护一个「内部字符互不重复」的窗口，用 Set 记录窗口内的字符。
+ *       right 右移，若新字符已存在，就从左边不断吐字符，直到把它排掉；
+ *       排掉之后再把新字符加进来，此时窗口一定无重复，用长度更新答案。
+ * 复杂度：时间 O(n)（每个字符最多进出 Set 一次），空间 O(字符集大小)
+ *
+ * 坑点：
+ * - 收缩用 while 而不是 if：可能连续吐出多个字符才轮到那个重复字符。
+ * - 求最大长度，是「不合法就收缩到合法」；求最小长度（LC209）是「合法就收缩到不合法」，
+ *   两者收缩时机正好相反。
+ * - 窗口内不能有重复，所以只能删最左边的字符，不能跳着删。
  */
 public class LC3 {
     public static void main(String[] args) {
-        // 典型滑动窗口求最大值
-        // 出现重复字符串 left~right所有都是重复的
-        // while循环条件判断是否重复，出现重复立刻进行左侧元素弹出
-        // 走完while循环表示当前字符已经不重复，添加到set集合中，进行下一轮判断
-        //求最大值的条件是不符进入while循环，符合跳出while循环，最小值正好相反
         String s = "abcabcbb";
 
+        // 记录当前窗口内出现过哪些字符
         Set<Character> set = new HashSet<>();
-        int count = 0;
-        int left = 0;
+        int maxLen = 0;  // 答案：最长无重复窗口长度
+        int left = 0;    // 窗口左边界
+
         for (int right = 0; right < s.length(); right++) {
-            char str = s.charAt(right);
-            while (set.contains(str)) {
+            char cur = s.charAt(right);
+
+            // 新字符已经在窗口里了：从左边一直吐，直到把它吐出去
+            while (set.contains(cur)) {
                 set.remove(s.charAt(left));
                 left++;
             }
-            set.add(str);
-            count = Math.max(count, right - left + 1);
 
+            // 此时窗口内一定没有重复字符，把它加进来
+            set.add(cur);
+            // 更新最大长度
+            maxLen = Math.max(maxLen, right - left + 1);
         }
-        System.out.println(count);
+        System.out.println(maxLen);
     }
 }

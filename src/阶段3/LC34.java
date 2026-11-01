@@ -3,52 +3,43 @@ package 阶段3;
 import java.util.Arrays;
 
 /**
- * 代码
- * 测试用例
- * 测试用例
- * 测试结果
- * 34. 在排序数组中查找元素的第一个和最后一个位置
- * 已解答
- * 中等
- * 相关标签
- * premium lock icon
- * 相关企业
- * 给你一个按照非递减顺序排列的整数数组 nums，和一个目标值 target。请你找出给定目标值在数组中的开始位置和结束位置。
- * <p>
- * 如果数组中不存在目标值 target，返回 [-1, -1]。
- * <p>
- * 你必须设计并实现时间复杂度为 O(log n) 的算法解决此问题。
- * <p>
- * <p>
- * <p>
- * 示例 1：
- * <p>
- * 输入：nums = [5,7,7,8,8,10], target = 8
- * 输出：[3,4]
- * 示例 2：
- * <p>
- * 输入：nums = [5,7,7,8,8,10], target = 6
- * 输出：[-1,-1]
- * 示例 3：
- * <p>
- * 输入：nums = [], target = 0
- * 输出：[-1,-1]
+ * LC34 在排序数组中查找元素的第一个和最后一个位置
+ *
+ * 难度：中等    标签：二分查找
+ *
+ * 题目：给定非递减数组 nums 和目标值 target，返回 target 出现的起始下标和结束下标；
+ *       不存在返回 [-1, -1]。要求时间复杂度 O(log n)。
+ * 示例：nums = [5,7,7,8,8,10], target = 8  →  [3,4]
+ *       nums = [5,7,7,8,8,10], target = 6  →  [-1,-1]
+ *
+ * 思路：一次二分只能确定「某个」位置，无法直接得到边界，所以拆成两次二分：
+ *       - findLeft：命中后不返回，继续往左收缩，用 ans 记住最后一个命中的位置 → 得到左边界；
+ *       - findRight：命中后继续往右收缩 → 得到右边界。
+ *       两次结构完全对称，只是命中后收缩的方向相反。
+ * 复杂度：时间 O(log n)，空间 O(1)
+ *
+ * 坑点：
+ * - 命中时不能立刻 return，必须先记录 ans 再继续收缩，否则只能得到随机某个位置。
+ * - 两次二分必须各自独立初始化 left/right，不能共用。
+ * - 找不到时 ans 保持 -1，两个方法都返回 -1，正好是题目要求的 [-1,-1]。
  */
 public class LC34 {
     public static void main(String[] args) {
-        // 题意：寻找target在数组中第一个出现的位置和最后的一个位置
-        // 分开遍历：最左面出现的target，最右面出现的target
         int[] nums = {5, 7, 7, 8, 8, 10};
         int target = 8;
-        // 最左边出现的target
+
+        // 分别求左右边界
         int left = findLeft(nums, target);
-        // 最右面出现的target
         int right = findRight(nums, target);
 
         int[] arr = new int[]{left, right};
         System.out.println(Arrays.toString(arr));
     }
 
+    /**
+     * 找 target 第一次出现的下标。
+     * 命中后不返回，而是继续压缩右边界，逼出最左的那个位置。
+     */
     private static int findLeft(int[] nums, int target) {
         int ans = -1;
         int left = 0;
@@ -56,21 +47,25 @@ public class LC34 {
         while (left <= right) {
             int mid = left + (right - left) / 2;
             if (nums[mid] == target) {
-                // 记录答案
+                // 记录候选答案
                 ans = mid;
-                // 左侧二分
+                // 关键：继续往左找，看还有没有更靠前的 target
                 right = mid - 1;
             } else if (nums[mid] > target) {
-                // 左侧二分
+                // 中点偏大，答案在左侧
                 right = mid - 1;
             } else {
-                // 右侧二分nums[mid] < target
+                // 中点偏小，答案在右侧
                 left = mid + 1;
             }
         }
         return ans;
     }
 
+    /**
+     * 找 target 最后一次出现的下标。
+     * 与 findLeft 对称：命中后继续压缩左边界。
+     */
     private static int findRight(int[] nums, int target) {
         int ans = -1;
         int left = 0;
@@ -78,15 +73,15 @@ public class LC34 {
         while (left <= right) {
             int mid = left + (right - left) / 2;
             if (nums[mid] == target) {
-                // 记录答案
+                // 记录候选答案
                 ans = mid;
-                // 右侧二分
+                // 关键：继续往右找，看还有没有更靠后的 target
                 left = mid + 1;
             } else if (nums[mid] < target) {
-                // 右侧二分
+                // 中点偏小，答案在右侧
                 left = mid + 1;
             } else {
-                // 左侧二分 nums[mid] > target
+                // 中点偏大，答案在左侧
                 right = mid - 1;
             }
         }

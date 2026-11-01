@@ -4,26 +4,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 给定一个不含重复数字的数组 nums ，返回其 所有可能的全排列 。你可以 按任意顺序 返回答案。
- * <p>
- * 示例 1：
- * <p>
- * 输入：nums = [1,2,3]
- * 输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
- * 示例 2：
- * <p>
- * 输入：nums = [0,1]
- * 输出：[[0,1],[1,0]]
- * 示例 3：
- * <p>
- * 输入：nums = [1]
- * 输出：[[1]]
+ * LC46 全排列（回溯法，标准模板）
  *
- * 【说明】
- * DFS + Backtracking 回溯版本（标准模板）
- * 全程只使用同一份 path（路径集合）、同一份 flag 标记数组，复用状态，节省内存
- * for循环每次从 i=0 从头遍历全部元素；flag数组标记当前排列里哪些下标已经用过，避免同一个数字重复选取
- * 顺序不同视为不同答案，所以不像子集用start限制下标只能往后走
+ * 难度：中等    标签：DFS / 回溯
+ *
+ * 题目：给定不含重复数字的数组 nums，返回所有可能的全排列。
+ * 示例：nums = [1,2,3]  →  [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+ *
+ * 思路：全程复用同一份 path 和 flag，递归前「做选择」，递归后「撤销选择」。
+ *       三段式：path.add / flag 置位 → dfs → path.remove / flag 复位。
+ *       每层 for 都从 0 开始，靠 flag 排除已经用过的数字。
+ * 复杂度：时间 O(n × n!)，空间 O(n)（不计结果集，只用了递归栈和一份 path）
+ *
+ * 坑点：
+ * - 存入答案时必须 new ArrayList<>(path)：直接 add(path) 存的是引用，
+ *   后续 remove 会把已经存进结果的数据一起改掉，最后全是空列表。
+ * - add 和 remove 必须成对出现，且 remove 的位置是 path.size() - 1（删最后一个）。
+ * - flag 复位不能漏，漏了就相当于这个数字被永久占用，后续分支全错。
+ * - 与副本法（LC46DFS）对比：回溯省内存，但状态管理容易出错。
  */
 public class LC46DFSBACK {
     public static void main(String[] args) {
@@ -32,11 +30,11 @@ public class LC46DFSBACK {
     }
 
     public static List<List<Integer>> permute(int[] nums) {
-        // ans：存放最终所有全排列结果
+        // ans：最终所有全排列
         List<List<Integer>> ans = new ArrayList<>();
-        // path：共用的路径草稿，会不断 add、remove 修改
+        // path：唯一共用的路径容器，会被反复 add / remove
         List<Integer> path = new ArrayList<>();
-        // flag：标记数组，flag[i]=true 代表 nums[i] 已经选入当前 path
+        // flag：flag[i] = true 表示 nums[i] 已在本条排列中
         boolean[] flag = new boolean[nums.length];
 
         dfs(flag, path, ans, nums);
@@ -44,35 +42,35 @@ public class LC46DFSBACK {
     }
 
     /**
-     * 回溯dfs，全排列
-     * @param flag 标记数组（共享，会修改恢复）
-     * @param path 当前排列路径（共享草稿）
-     * @param ans 答案集合
+     * 回溯 DFS：共用 path 和 flag，靠「做选择 / 撤销选择」保证状态正确。
+     *
+     * @param flag 标记数组（共享，修改后必须恢复）
+     * @param path 当前排列路径（共享草稿纸）
+     * @param ans  结果集合
      * @param nums 原始数组
      */
     static void dfs(boolean[] flag, List<Integer> path, List<List<Integer>> ans, int[] nums) {
-        // 终止条件：path长度等于数组长度，说明凑齐一条完整排列
+        // 终止条件：凑齐一条完整排列
         if (path.size() == nums.length) {
-            // 快照！new一份新list存入结果。直接add(path)会因为后续修改path污染已存入的数据
+            // 必须快照！否则后续 remove 会污染这条已存入的答案
             ans.add(new ArrayList<>(path));
             return;
         }
 
-        // 全排列：i从0从头遍历所有数字，不是start
+        // 每次都从 0 开始，靠 flag 排除已用过的数字
         for (int i = 0; i < nums.length; i++) {
-            // 当前下标数字已经被使用，跳过
             if (flag[i]) {
                 continue;
             }
 
-            // 1. 做选择：把当前数字加入路径，打上标记
+            // 1. 做选择
             path.add(nums[i]);
             flag[i] = true;
 
-            // 2. 递归深入，继续选下一个位置的数字
+            // 2. 递归深入，选下一个位置的数字
             dfs(flag, path, ans, nums);
 
-            // 3. 回溯 backtrack：撤销刚才的选择，恢复到进入本次循环前的状态
+            // 3. 撤销选择，恢复到进入本轮循环前的状态
             path.remove(path.size() - 1);
             flag[i] = false;
         }
