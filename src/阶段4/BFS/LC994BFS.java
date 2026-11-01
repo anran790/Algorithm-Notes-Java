@@ -4,102 +4,92 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * 994. 腐烂的橘子
- * 已解答
- * 中等
- * 相关标签
- * premium lock icon
- * 相关企业
- * 在给定的 m x n 网格 grid 中，每个单元格可以有以下三个值之一：
+ * LC994 腐烂的橘子
  *
- * 值 0 代表空单元格；
- * 值 1 代表新鲜橘子；
- * 值 2 代表腐烂的橘子。
- * 每分钟，腐烂的橘子 周围 4 个方向上相邻 的新鲜橘子都会腐烂。
+ * 难度：中等    标签：多源 BFS / 分层遍历
  *
- * 返回 直到单元格中没有新鲜橘子为止所必须经过的最小分钟数。如果不可能，返回 -1 。
+ * 题目：网格中 0 是空格、1 是新鲜橘子、2 是腐烂橘子。每分钟，腐烂橘子会让上下左右相邻的
+ *       新鲜橘子腐烂。求所有橘子都腐烂所需的最少分钟数；若有橘子永远烂不掉，返回 -1。
+ * 示例：[[2,1,1],[1,1,0],[0,1,1]]  →  4
+ *       [[2,1,1],[0,1,1],[1,0,1]]  →  -1
  *
- * 示例 1：
- * 输入：grid = [[2,1,1],[1,1,0],[0,1,1]]
- * 输出：4
- * 示例 2：
- * 输入：grid = [[2,1,1],[0,1,1],[1,0,1]]
- * 输出：-1
- * 解释：左下角的橘子（第 2 行， 第 0 列）永远不会腐烂，因为腐烂只会发生在 4 个方向上。
- * 示例 3：
- * 输入：grid = [[0,2]]
- * 输出：0
- * 解释：因为 0 分钟时已经没有新鲜橘子了，所以答案就是 0 。
+ * 思路：多源 BFS。所有腐烂橘子同时作为起点入队，一分钟 = 一层扩散。
+ *       1. 先遍历一遍：腐烂的入队，同时统计新鲜橘子总数；
+ *       2. 逐层扩散，每层把能感染的新鲜橘子标记为腐烂并让 freshNum 减 1；
+ *       3. 只有当这一层真的感染了橘子，分钟数才 +1；
+ *       4. 结束后 freshNum 归零则返回分钟数，否则说明有孤岛，返回 -1。
+ * 复杂度：时间 O(m×n)，空间 O(m×n)
  *
- * 思路：多源BFS分层遍历
- * 1. 先把所有初始腐烂橘子入队，同时统计新鲜橘子总数
- * 2. 逐层向外感染，flag标记本层是否产生新感染；只有感染成功才时间+1
- * 3. BFS结束后，如果还有新鲜橘子剩余，返回-1
+ * 坑点：
+ * - 必须用「多源」：把所有腐烂橘子一次性入队，而不是对每个腐烂橘子单独 BFS。
+ * - 分钟数不能每轮都 +1，要用 flag 判断本层是否真的产生了感染，
+ *   否则最后一层会多算一分钟。
+ * - 一开始就判断 freshNum == 0 直接返回 0，否则会多算 1 分钟。
+ * - 感染后立刻把 grid 改成 2，天然起到 visited 的作用，不需要额外的标记数组。
  */
 public class LC994BFS {
-    public static void main(String[] args) {
-        // 测试样例，预期输出：4
-        int[][] grid = {{2, 1, 1}, {1, 1, 0}, {0, 1, 1}};
-        int ans = orangesRotting(grid);
-        System.out.println(ans);
-    }
-
     // 方向数组：下、上、左、右
     public static int[][] dirs = {{1, 0}, {-1, 0}, {0, -1}, {0, 1}};
+
+    public static void main(String[] args) {
+        // 测试样例，预期输出 4
+        int[][] grid = {{2, 1, 1}, {1, 1, 0}, {0, 1, 1}};
+        System.out.println(orangesRotting(grid));
+    }
 
     public static int orangesRotting(int[][] grid) {
         int m = grid.length;
         int n = grid[0].length;
         Queue<int[]> queue = new LinkedList<>();
-        int count = 0;        // 记录耗时（分钟）
-        int freshNum = 0;     // 新鲜橘子总数
+        int minutes = 0;   // 已过去的分钟数
+        int freshNum = 0;  // 剩余新鲜橘子数
 
-        // 1.遍历网格：收集所有腐烂橘子入队 + 统计新鲜橘子
+        // 第 1 步：收集所有腐烂橘子作为多源起点，同时数清新鲜橘子
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++) {
                 if (grid[i][j] == 2) {
                     queue.add(new int[]{i, j});
-                }
-                if (grid[i][j] == 1) {
+                } else if (grid[i][j] == 1) {
                     freshNum++;
                 }
             }
         }
 
-        // 没有新鲜橘子，直接返回0
+        // 本来就没有新鲜橘子，0 分钟即完成
         if (freshNum == 0) {
             return 0;
         }
 
-        // 2.多源分层BFS，一层代表一轮扩散
+        // 第 2 步：分层 BFS，一层代表一分钟的扩散
         while (!queue.isEmpty()) {
             int size = queue.size();
-            boolean flag = false; // 标记本层是否成功感染新鲜橘子
+            boolean infected = false;  // 本层是否感染了新的橘子
 
             for (int i = 0; i < size; i++) {
                 int[] cur = queue.poll();
                 int x = cur[0];
                 int y = cur[1];
 
-                // 四个方向尝试感染邻居
                 for (int[] dir : dirs) {
                     int nx = x + dir[0];
                     int ny = y + dir[1];
-                    // 坐标合法，并且是新鲜橘子
+                    // 越界判断 + 必须是新鲜橘子
                     if (nx >= 0 && nx < m && ny >= 0 && ny < n && grid[nx][ny] == 1) {
                         freshNum--;
-                        grid[nx][ny] = 2;   // 标记为腐烂，防止重复入队
+                        grid[nx][ny] = 2;   // 立刻变腐烂，兼作 visited 标记
                         queue.add(new int[]{nx, ny});
-                        flag = true;        // 本轮产生感染
+                        infected = true;
                     }
                 }
             }
-            // 只有本轮成功感染橘子，时间才 +1
-            if (flag) {
-                count++;
+
+            // 只有真的感染了，才算过去一分钟
+            if (infected) {
+                minutes++;
             }
         }
-        // 新鲜橘子全部烂完返回时间，否则返回-1
-        return freshNum == 0 ? count : -1;
+
+        // 还有新鲜橘子说明被空格隔开，永远烂不掉
+        return freshNum == 0 ? minutes : -1;
     }
 }

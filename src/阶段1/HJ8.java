@@ -5,37 +5,38 @@ import java.util.Scanner;
 import java.util.TreeMap;
 
 /**
- * 校招时部分企业笔试将禁止编程题跳出页面，为提前适应，练习时请使用在线自测，而非本地IDE。
- * 描述
- * 数据表中，一条记录包含表索引和数值两个值。请对表索引相同的记录进行合并（即将相同索引的数值进行求和运算），随后按照索引值的大小从小到大依次输出。
- * 输入描述：
- * 第一行输入一个整数 n(1≦n≦500)n(1≦n≦500) 代表数据表的记录数。
- * 此后 nn 行，第 ii 行输入两个整数 xi,yi(0≦xi≦11 111 111; 1≦yi≦105)xi​,yi​(0≦xi​≦11111111; 1≦yi​≦105) 代表数据表的第 ii 条记录的索引和数值。
- * 输出描述：
- * 一共若干行（视输入数据变化），第 ii 行输出两个整数，代表合并后数据表中第 ii 条记录的索引和数值。
- * 输入：
- * 4
- * 0 1
- * 0 2
- * 1 2
- * 3 4
- * 复制
- * 输出：
- * 0 3
- * 1 2
- * 3 4
- * 复制
+ * HJ8 合并表记录
+ *
+ * 难度：简单    标签：哈希表 / 有序聚合
+ *
+ * 题目：输入 n 条记录，每条包含「索引 数值」。索引相同的记录将数值相加合并，
+ *       结果按索引从小到大输出。
+ * 示例：
+ *   输入：4 / 0 1 / 0 2 / 1 2 / 3 4
+ *   输出：0 3 / 1 2 / 3 4
+ *
+ * 思路：用 TreeMap 存「索引 -> 累加值」，边读边合并，最后按 key 天然升序输出。
+ * 复杂度：时间 O(n log n)，空间 O(n)
+ *
+ * 坑点：
+ * - nextInt() 读完 n 后光标还停在行尾，必须先 nextLine() 吃掉换行，
+ *   否则第一次 nextLine() 读到空串，split 会数组越界。
+ * - 用 TreeMap 而不是 HashMap，是因为题目要求按索引升序输出，省去额外排序。
+ * - map.getOrDefault(key, 0) + value：同一索引可能重复出现，必须累加而不是覆盖。
  */
 public class HJ8 {
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         int n = in.nextInt();
+        // TreeMap：key 天然按升序排列，正好满足输出顺序要求
         Map<Integer, Integer> map = new TreeMap<>();
+        // 消化掉 nextInt() 留在缓冲区里的换行符
         in.nextLine();
         while (n-- > 0) {
             String[] str = in.nextLine().split(" ");
             int key = Integer.parseInt(str[0]);
             int value = Integer.parseInt(str[1]);
+            // 同索引累加；第一次出现时以 0 为底
             map.put(key, map.getOrDefault(key, 0) + value);
         }
         for (Integer key : map.keySet()) {
